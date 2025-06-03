@@ -50,3 +50,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         password_validation.validate_password(value, self.instance)
         return value
+
+
+class CustomUserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number',
+                  'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance']
