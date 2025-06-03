@@ -57,3 +57,9 @@ class CustomUserDetailSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['username', 'first_name', 'last_name', 'email', 'phone_number',
                   'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance']
+
+
+class BalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['balance']

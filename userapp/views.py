@@ -1,3 +1,5 @@
+from pickle import APPEND
+
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -67,3 +69,32 @@ class UserDetailView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class DepositAndWithdrawView(generics.UpdateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = BalanceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        amount = serializer.validated_data.get('balance')
+
+        if amount is None:
+            return Response({"detail": "请添加balance参数"}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_balance = user.balance + amount
+
+        if new_balance < 0:
+            return Response({"detail": "余额不足"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.balance = new_balance
+        user.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
