@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .serializers import *
 from rest_framework import generics, permissions, status
 from .models import CustomUser
+from django.utils import timezone
 
 
 class UserRegistrationView(APIView):
@@ -21,6 +22,8 @@ class UserLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             token, created = Token.objects.get_or_create(user=user)
+            user.last_login = timezone.now()
+            user.save()
             return Response({'token': token.key}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
