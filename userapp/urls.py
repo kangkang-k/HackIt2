@@ -8,5 +8,4 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('detail/', UserDetailView.as_view(), name='user_detail'),
     path('balance/', DepositAndWithdrawView.as_view(), name='update-balance'),
-
 ]

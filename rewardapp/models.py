@@ -21,6 +21,7 @@ class Reward(models.Model):
         ('in_progress', 'In Progress'),  # 开发中
         ('completed', 'Completed'),  # 开发完成
         ('payed', 'Payed'),  # 已结款
+        ('callback', 'Callback'),  # 已打回
         ('cancelled', 'Cancelled'),  # 已取消
     ]
 
@@ -28,6 +29,8 @@ class Reward(models.Model):
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='rewards')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_rewards')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_rewards',
+                                 null=True, blank=True)
     reward_amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,5 +54,3 @@ class RewardApplication(models.Model):
 
     class Meta:
         db_table = 'RewardApplication'
-
-

@@ -12,4 +12,5 @@ urlpatterns = [
     path('public-rewards/', PublicRewardListView.as_view(), name='public-reward-list'),
     path('review_application/<int:application_id>/', ReviewApplicationView.as_view(), name='review_application'),
     path('update_reward_status/<int:application_id>/', UpdateRewardStatusView.as_view(), name='update_reward_status'),
+    path('rewardpay/<int:reward_id>/', RewardPayView.as_view(), name='pay_for_reward'),
 ]

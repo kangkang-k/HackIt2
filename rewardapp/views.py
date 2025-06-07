@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers, status
 from rest_framework import generics
 from rest_framework.response import Response
@@ -56,8 +57,25 @@ class RewardApplicationViewSet(viewsets.ModelViewSet):
 
         serializer.save(applicant=self.request.user)
 
+        reward.receiver = self.request.user
         reward.status = 'applied'
         reward.save()
+
+    def destroy(self, request, *args, **kwargs):
+        application = self.get_object()
+        reward = application.reward
+
+        if application.is_accepted:
+            raise serializers.ValidationError("Cannot delete an accepted application.")
+
+        response = super().destroy(request, *args, **kwargs)
+
+        if not reward.applications.exists():
+            reward.receiver = None
+            reward.status = 'waiting'
+            reward.save()
+
+        return response
 
     def update(self, request, *args, **kwargs):
         raise serializers.ValidationError("Modification of applications is not allowed.")
@@ -106,7 +124,8 @@ class UpdateRewardStatusView(APIView):
             return Response({"detail": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if application.applicant != request.user:
-            return Response({"detail": "You do not have permission to update this reward."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "You do not have permission to update this reward."},
+                            status=status.HTTP_403_FORBIDDEN)
 
         if not application.is_accepted:
             return Response({"detail": "This application has not been accepted."}, status=status.HTTP_400_BAD_REQUEST)
@@ -115,3 +134,38 @@ class UpdateRewardStatusView(APIView):
         application.reward.save()
 
         return Response({"detail": "Reward status updated to completed successfully."}, status=status.HTTP_200_OK)
+
+
+class RewardPayView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, reward_id):
+        try:
+            reward = Reward.objects.get(pk=reward_id)
+        except Reward.DoesNotExist:
+            return Response({"detail": "悬赏未找到"}, status=status.HTTP_404_NOT_FOUND)
+
+        if reward.creator != request.user:
+            return Response({"detail": "此悬赏无审批权限"}, status=status.HTTP_403_FORBIDDEN)
+
+        if reward.status != 'completed':
+            return Response({"detail": "只允许审批已完成的悬赏"}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_status = request.data.get('status')
+        if new_status not in ['payed', 'callback']:
+            return Response({"detail": "参数错误"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if reward.creator.balance < reward.reward_amount:
+            return Response({"detail": "余额不足，无法支付悬赏金额"}, status=status.HTTP_400_BAD_REQUEST)
+
+        receiver = reward.receiver
+        receiver.balance += float(reward.reward_amount)
+        receiver.save()
+
+        reward.creator.balance -= float(reward.reward_amount)
+        reward.creator.save()
+
+        reward.status = new_status
+        reward.save()
+
+        return Response({"detail": f"审批成功： {new_status} "}, status=status.HTTP_200_OK)
