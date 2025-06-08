@@ -37,16 +37,29 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class CustomUserDetailSerializer(serializers.ModelSerializer):
+    is_auth_user = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
         fields = ['username', 'first_name', 'last_name', 'email', 'phone_number',
-                  'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance']
+                  'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance', 'is_auth_user']
+
+    def get_is_auth_user(self, obj):
+        request = self.context.get('request')
+        return request.user.is_authenticated and request.user.username == obj.username
+
 
 class PublicUserDetailSerializer(serializers.ModelSerializer):
+    is_auth_user = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
         fields = ['username', 'first_name', 'last_name', 'email', 'birth_date',
-                  'completed_tasks', 'bio', 'code_age']
+                  'completed_tasks', 'bio', 'code_age', 'is_auth_user']
+
+    def get_is_auth_user(self, obj):
+        request = self.context.get('request')
+        return request.user.is_authenticated and request.user.username == obj.username
 
 
 class ChangePasswordSerializer(serializers.Serializer):

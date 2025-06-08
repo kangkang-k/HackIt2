@@ -5,10 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import RewardSerializer
 from .permissions import IsOwnerOrReadOnly
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, BasePermission
 from .models import Category
 from .serializers import CategorySerializer
-from .permissions import IsSuperUser
 from rest_framework import viewsets
 from .models import RewardApplication, Reward
 from .serializers import RewardApplicationSerializer
@@ -16,10 +15,19 @@ from .permissions import IsApplicantOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 
 
+class IsSuperUserOrReadOnly(BasePermission):
+
+    def has_permission(self, request, view):
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return request.user and request.user.is_authenticated
+
+        return request.user and request.user.is_superuser
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperUserOrReadOnly]
 
 
 class RewardViewSet(viewsets.ModelViewSet):
@@ -42,11 +50,12 @@ class PublicRewardListView(generics.ListAPIView):
 
         category_name = self.request.query_params.get('category_name', None)
         creator_username = self.request.query_params.get('creator_username', None)
-        is_filter = self.request.query_params.get('is_filter', False)
-        if not is_filter:
-            queryset = Reward.objects.filter(status='waiting')
+        status = self.request.query_params.get('status', None)
+        if status is not None:
+            queryset = Reward.objects.filter(status=status)
         else:
             queryset = Reward.objects.all()
+
         if category_name:
             try:
                 category = Category.objects.get(name=category_name)
