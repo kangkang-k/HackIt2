@@ -1,6 +1,6 @@
-from django.db import transaction
 from rest_framework import serializers, status
 from rest_framework import generics
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import RewardSerializer
@@ -35,9 +35,29 @@ class RewardViewSet(viewsets.ModelViewSet):
 
 
 class PublicRewardListView(generics.ListAPIView):
-    queryset = Reward.objects.filter(status='waiting')
     serializer_class = RewardSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+
+        category_name = self.request.query_params.get('category_name', None)
+        creator_username = self.request.query_params.get('creator_username', None)
+        is_filter = self.request.query_params.get('is_filter', False)
+        if not is_filter:
+            queryset = Reward.objects.filter(status='waiting')
+        else:
+            queryset = Reward.objects.all()
+        if category_name:
+            try:
+                category = Category.objects.get(name=category_name)
+                queryset = queryset.filter(category=category)
+            except Category.DoesNotExist:
+                raise NotFound(detail="未找到分类")
+
+        if creator_username:
+            queryset = queryset.filter(creator__username=creator_username)
+
+        return queryset
 
 
 class RewardApplicationViewSet(viewsets.ModelViewSet):
@@ -53,7 +73,7 @@ class RewardApplicationViewSet(viewsets.ModelViewSet):
         reward = serializer.validated_data['reward']
         if reward.creator == self.request.user or reward.status != 'waiting':
             raise serializers.ValidationError(
-                "You cannot apply for this reward. Either it belongs to you or its status is not 'waiting'.")
+                "无法接受自己发布的悬赏，或者悬赏状态不为waiting")
 
         serializer.save(applicant=self.request.user)
 
@@ -66,7 +86,7 @@ class RewardApplicationViewSet(viewsets.ModelViewSet):
         reward = application.reward
 
         if application.is_accepted:
-            raise serializers.ValidationError("Cannot delete an accepted application.")
+            raise serializers.ValidationError("无法删除已被接受的悬赏")
 
         response = super().destroy(request, *args, **kwargs)
 
@@ -160,6 +180,7 @@ class RewardPayView(APIView):
 
         receiver = reward.receiver
         receiver.balance += float(reward.reward_amount)
+        receiver.completed_tasks += 1
         receiver.save()
 
         reward.creator.balance -= float(reward.reward_amount)

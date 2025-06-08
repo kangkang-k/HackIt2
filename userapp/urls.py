@@ -6,6 +6,6 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='user-login'),
     path('update/', UpdateUserView.as_view(), name='update-user'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
-    path('detail/', UserDetailView.as_view(), name='user_detail'),
+    path('detail/<str:username>/', UserDetailView.as_view(), name='user_detail'),
     path('balance/', DepositAndWithdrawView.as_view(), name='update-balance'),
 ]

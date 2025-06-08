@@ -1,4 +1,5 @@
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import *
@@ -30,7 +31,7 @@ class UserLoginView(APIView):
 
 class UpdateUserView(generics.UpdateAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = CustomUserDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
@@ -62,11 +63,21 @@ class ChangePasswordView(generics.UpdateAPIView):
 
 class UserDetailView(generics.RetrieveAPIView):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = []
+
+    def get_serializer_class(self):
+        if self.request.user.is_authenticated and self.request.user.username == self.kwargs['username']:
+            return CustomUserDetailSerializer
+        else:
+            return PublicUserDetailSerializer
 
     def get_object(self):
-        return self.request.user
+        username = self.kwargs.get('username')
+        try:
+            user = CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise NotFound('User not found')
+        return user
 
 
 class DepositAndWithdrawView(generics.UpdateAPIView):

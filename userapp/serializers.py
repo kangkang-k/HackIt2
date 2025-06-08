@@ -36,11 +36,17 @@ class UserLoginSerializer(serializers.Serializer):
         return data
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['phone_number', 'birth_date', 'bio', 'code_age', 'first_name', 'last_name', 'email']
-        read_only_fields = ['completed_tasks', 'balance']
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number',
+                  'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance']
+
+class PublicUserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'birth_date',
+                  'completed_tasks', 'bio', 'code_age']
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -50,13 +56,6 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         password_validation.validate_password(value, self.instance)
         return value
-
-
-class CustomUserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number',
-                  'birth_date', 'completed_tasks', 'bio', 'code_age', 'balance']
 
 
 class BalanceSerializer(serializers.ModelSerializer):
