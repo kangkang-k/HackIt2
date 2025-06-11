@@ -23,6 +23,8 @@ class Reward(models.Model):
         ('payed', 'Payed'),  # 已结款
         ('callback', 'Callback'),  # 已打回
         ('cancelled', 'Cancelled'),  # 已取消
+        ('teke_down', 'TakeDown'),  # 已下架
+        ('teke_down', 'TakeDown'),  # 申请中
     ]
 
     title = models.CharField(max_length=200)
