@@ -16,15 +16,14 @@ class Category(models.Model):
 
 class Reward(models.Model):
     STATUS_CHOICES = [
-        ('applied', 'Applied'),  # 已被接单
+        ('applied', 'Applied'),  # 被接单
         ('waiting', 'Waiting'),  # 挂单中
         ('in_progress', 'In Progress'),  # 开发中
         ('completed', 'Completed'),  # 开发完成
         ('payed', 'Payed'),  # 已结款
         ('callback', 'Callback'),  # 已打回
         ('cancelled', 'Cancelled'),  # 已取消
-        ('teke_down', 'TakeDown'),  # 已下架
-        ('teke_down', 'TakeDown'),  # 申请中
+        ('take_down', 'TakeDown'),  # 已下架
     ]
 
     title = models.CharField(max_length=200)

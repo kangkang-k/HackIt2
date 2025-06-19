@@ -16,8 +16,7 @@ class RewardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reward
         fields = ['id', 'title', 'description', 'category', 'category_name', 'creator_username', 'reward_amount',
-                  'created_at',
-                  'updated_at', 'status']
+                  'created_at', 'updated_at', 'status']
         read_only_fields = ['creator', 'created_at', 'updated_at']
 
     def get_category_name(self, obj):
@@ -25,6 +24,20 @@ class RewardSerializer(serializers.ModelSerializer):
 
     def get_creator_username(self, obj):
         return obj.creator.username if obj.creator else None
+
+    def update(self, instance, validated_data):
+        if 'status' in validated_data:
+            new_status = validated_data['status']
+            if (instance.status == 'take_down' and new_status == 'waiting') or (
+                instance.status != 'waiting' and new_status == 'take_down'):
+                instance.status = new_status
+
+        for attr, value in validated_data.items():
+            if attr != 'status':
+                setattr(instance, attr, value)
+
+        instance.save()
+        return instance
 
 
 class RewardApplicationSerializer(serializers.ModelSerializer):

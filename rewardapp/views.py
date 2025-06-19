@@ -81,6 +81,8 @@ class RewardApplicationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         reward = serializer.validated_data['reward']
         if reward.creator == self.request.user or reward.status != 'waiting':
+            print(reward.creator)
+            print(self.request.user)
             raise serializers.ValidationError(
                 "无法接受自己发布的悬赏，或者悬赏状态不为waiting")
 
@@ -120,10 +122,10 @@ class ReviewApplicationView(APIView):
         try:
             application = RewardApplication.objects.get(pk=application_id)
         except RewardApplication.DoesNotExist:
-            return Response({"detail": "Application not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "未找到此申请"}, status=status.HTTP_404_NOT_FOUND)
 
         if not request.user.is_superuser and application.reward.creator != request.user:
-            return Response({"detail": "You do not have permission to review this application."},
+            return Response({"detail": "当前用户无权限操作此申请"},
                             status=status.HTTP_403_FORBIDDEN)
 
         is_accepted = request.data.get('is_accepted')
